@@ -42,7 +42,7 @@ class BaikeSpider(scrapy.Spider):
             self.log("first url %s" % data['url'])
             urls_collection.update(
                 data,
-                {'used': True, 'updated_at': datetime.now()},
+                {'used': True, 'updated_at': datetime.now(),'url':data['url'], 'created_at': data['created_at']},
                 upsert = False
             )
             yield scrapy.Request(url=data['url'] , callback=self.parse)
@@ -63,7 +63,7 @@ class BaikeSpider(scrapy.Spider):
                 time.sleep(sleep_time)
                 urls_collection.update(
                     data,
-                    {'used': True, 'updated_at': datetime.now()},
+                    {'used': True, 'updated_at': datetime.now(),'url':data['url'], 'created_at': data['created_at']},
                     upsert = False
                 )
                 yield scrapy.Request(url=data['url'] , callback=self.parse)
@@ -87,6 +87,7 @@ class BaikeSpider(scrapy.Spider):
             })
         else:
             self.log("repeat scrapy %s" % response.url)
+            return
         urls=re.findall(r'<a.*?href=.*?<\/a>', response.body, re.I|re.S|re.M)
         res_url = r"(?<=href=\").+?(?=\")|(?<=href=\').+?(?=\')"
         link_list = []
