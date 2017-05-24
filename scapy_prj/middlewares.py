@@ -8,6 +8,20 @@
 from scrapy import signals
 
 
+_IP_INDEX_ = 0
+IPS = [
+"162.243.128.154:8080",
+"200.150.68.126:3128",
+"111.23.10.45:80",
+"186.95.182.59:8080",
+"222.94.146.102:808",
+"187.75.231.53:8080",
+"212.237.27.50:1189",
+"36.249.28.137:808",
+"183.88.212.184:8080",
+"113.227.183.167:80",
+]
+
 class ScapyPrjSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the spider middleware does not modify the
@@ -54,3 +68,16 @@ class ScapyPrjSpiderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+    
+
+class MyCustomDownloaderMiddleware(object):
+    def process_request(self, request, spider):
+
+        # Set the location of the proxy
+        global _IP_INDEX_
+
+        request.meta['proxy'] = "http://" + IPS[_IP_INDEX_]
+        _IP_INDEX_ = (_IP_INDEX_+1) % len(IPS)
+
+
