@@ -166,7 +166,7 @@ class MyCustomDownloaderMiddleware(object):
 
         # Set the location of the proxy
         global _IP_INDEX_
-
+        print("use %s proxy ip: %s" % (_IP_INDEX_, IPS[_IP_INDEX_]))
         request.meta['proxy'] = "http://" + IPS[_IP_INDEX_]
         _IP_INDEX_ = (_IP_INDEX_+1) % len(IPS)
 

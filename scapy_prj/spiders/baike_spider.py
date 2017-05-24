@@ -32,6 +32,10 @@ file_suffix = [
 class BaikeSpider(scrapy.Spider):
     name = "baike"
 
+    def __init__(self, *args, **kwargs):
+        super(BaikeSpider, self).__init__(*args, **kwargs)
+        self._on_crawl_urls_ = []
+
     def start_requests(self):
         urls = [
             # 'https://baike.baidu.com/',
@@ -45,7 +49,11 @@ class BaikeSpider(scrapy.Spider):
                 {'used': True, 'updated_at': datetime.now(),'url':data['url'], 'created_at': data['created_at']},
                 upsert = False
             )
-            yield scrapy.Request(url=data['url'] , callback=self.parse)
+            self._on_crawl_urls_.append(data['url'])
+            req = scrapy.Request(url=data['url'] , callback=self.parse)
+            req.meta["url_data"] = data
+            yield req
+            # yield scrapy.Request(url=data['url'] , callback=self.parse)
         else:
             self.log("first url %s" % ('https://baike.baidu.com/'))
             urls_collection.insert({
@@ -59,19 +67,24 @@ class BaikeSpider(scrapy.Spider):
             self.log("cost time: %s" % (datetime.now()-lastTime))
             sleep_time = 3 + (int(random.random() * 10) % 4)
             self.log("begin  query at %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            data = urls_collection.find_one({'used': False})
+            data = urls_collection.find_one({'used': False, 'url':{'$nin':self._on_crawl_urls_}})
             self.log("finish query at %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             self.log("get next: %s" % data)
             if data:
                 # self.log("after %ss next url %s" % (sleep_time, data['url']))
                 self.log("next url %s" % (data['url']))
                 # time.sleep(sleep_time)
-                urls_collection.update(
-                    data,
-                    {'used': True, 'updated_at': datetime.now(),'url':data['url'], 'created_at': data['created_at']},
-                    upsert = False
-                )
-                yield scrapy.Request(url=data['url'] , callback=self.parse)
+                # urls_collection.update(
+                #     data,
+                #     {'used': True, 'updated_at': datetime.now(),'url':data['url'], 'created_at': data['created_at']},
+                #     upsert = False
+                # )
+                while len(self._on_crawl_urls_) > 100:
+                    del self._on_crawl_urls_[0]
+                self._on_crawl_urls_.append(data['url'])
+                req = scrapy.Request(url=data['url'] , callback=self.parse)
+                req.meta["url_data"] = data
+                yield req
             else:
                 self.log("after %s next url %s" % (sleep_time, data))
                 break
@@ -80,6 +93,13 @@ class BaikeSpider(scrapy.Spider):
         #     yield scrapy.Request(url=url , callback=self.parse)
 
     def parse(self, response):
+        urlData = response.meta["url_data"]
+        if urlData:
+            urls_collection.update(
+                urlData,
+                {'used': True, 'updated_at': datetime.now(),'url':urlData['url'], 'created_at': urlData['created_at']},
+                upsert = False
+            )
         self.log("body size %s, url:%s" % (len(response.body), response.url))
         data = content_page_collection.find({'url': response.url})
         if not data or data.count() == 0:
