@@ -54,9 +54,13 @@ class BaikeSpider(scrapy.Spider):
                 'created_at': datetime.now()
             })
             yield scrapy.Request(url='https://baike.baidu.com/' , callback=self.parse)
+        lastTime = datetime.now()
         while 1:
+            self.log("cost time: %s" % (datetime.now()-lastTime))
             sleep_time = 3 + (int(random.random() * 10) % 4)
+            self.log("begin  query at %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             data = urls_collection.find_one({'used': False})
+            self.log("finish query at %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             self.log("get next: %s" % data)
             if data:
                 # self.log("after %ss next url %s" % (sleep_time, data['url']))
