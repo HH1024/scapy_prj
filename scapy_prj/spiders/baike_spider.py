@@ -95,6 +95,8 @@ class BaikeSpider(scrapy.Spider):
     def parse(self, response):
         urlData = response.meta["url_data"]
         if urlData:
+            if urlData['url'] in self._on_crawl_urls_:
+                self._on_crawl_urls_.remove(urlData['url'])
             urls_collection.update(
                 urlData,
                 {'used': True, 'updated_at': datetime.now(),'url':urlData['url'], 'created_at': urlData['created_at']},
