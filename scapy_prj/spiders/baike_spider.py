@@ -65,6 +65,7 @@ class BaikeSpider(scrapy.Spider):
         lastTime = datetime.now()
         while 1:
             self.log("cost time: %s" % (datetime.now()-lastTime))
+            lastTime = datetime.now()
             sleep_time = 3 + (int(random.random() * 10) % 4)
             self.log("begin  query at %s" % datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             data = urls_collection.find_one({'used': False, 'url':{'$nin':self._on_crawl_urls_}})
